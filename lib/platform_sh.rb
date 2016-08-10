@@ -1,4 +1,4 @@
-require "platform/version"
+require "platform_sh/version"
 require "base64"
 require 'json'
 
