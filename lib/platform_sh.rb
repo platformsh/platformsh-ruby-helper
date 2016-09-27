@@ -6,7 +6,7 @@ class PlatformSH
   'use strict'
   # Reads Platform.sh configuration from environment and returns a single object
   def self.config
-    if ENV.has_key? 'PLATFORM_PROJECT'
+    if on_platform?
       conf = {}
       conf["application"] = read_base64_json('PLATFORM_APPLICATION')
       conf["relationships"] = read_base64_json('PLATFORM_RELATIONSHIPS')
@@ -25,15 +25,13 @@ class PlatformSH
     end
     conf
   end
+  
+  def self.on_platform?
+    ENV.has_key? 'PLATFORM_PROJECT'
+  end
 
   def self.get_relationship rel_name, attr
-    if ENV.has_key? 'PLATFORM_PROJECT'
-      relationship = config["relationships"][rel_name].first
-      var = relationship[attr]
-    else
-      var = nil
-    end
-    var
+    on_platform? ? config["relationships"][rel_name].first[attr] : nil
   end
 
   private
