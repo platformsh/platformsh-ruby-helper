@@ -26,6 +26,16 @@ class PlatformSH
     conf
   end
 
+  def self.get_relationship rel_name, attr
+    if ENV.has_key? 'PLATFORM_PROJECT'
+      relationship = config["relationships"][rel_name].first
+      var = relationship[attr]
+    else
+      var = nil
+    end
+    var
+  end
+
   private
   def self.read_base64_json(var_name)
     begin
@@ -40,5 +50,5 @@ class PlatformSH
   def self.read_app_config
     JSON.parse(File.read('/run/config.json'))
   end
-  
+
 end

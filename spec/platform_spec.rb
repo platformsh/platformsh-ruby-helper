@@ -15,7 +15,7 @@ describe PlatformSH do
     ENV["PLATFORM_RELATIONSHIPS"]="eyJkYXRhYmFzZSI6IFt7InVzZXJuYW1lIjogInVzZXIiLCAicGFzc3dvcmQiOiAiIiwgImlwIjogIjI0Ni4wLjI0MS41MCIsICJob3N0IjogImRhdGFiYXNlLmludGVybmFsIiwgInF1ZXJ5IjogeyJpc19tYXN0ZXIiOiB0cnVlfSwgInBhdGgiOiAibWFpbiIsICJzY2hlbWUiOiAibXlzcWwiLCAicG9ydCI6IDMzMDZ9XX0="
     ENV["PLATFORM_ROUTES"]="eyJodHRwczovL3JhaWxzLXUzY3dnMm81MzZtaDYuZXUucGxhdGZvcm0uc2gvIjogeyJjYWNoZSI6IHsiZGVmYXVsdF90dGwiOiAwLCAiY29va2llcyI6IFsiKiJdLCAiZW5hYmxlZCI6IHRydWUsICJoZWFkZXJzIjogWyJBY2NlcHQiLCAiQWNjZXB0LUxhbmd1YWdlIl19LCAic3NpIjogeyJlbmFibGVkIjogZmFsc2V9LCAib3JpZ2luYWxfdXJsIjogImh0dHBzOi8ve2RlZmF1bHR9LyIsICJ1cHN0cmVhbSI6ICJteXJ1YnlhcHAiLCAidHlwZSI6ICJ1cHN0cmVhbSJ9LCAiaHR0cDovL3JhaWxzLXUzY3dnMm81MzZtaDYuZXUucGxhdGZvcm0uc2gvIjogeyJzc2kiOiB7ImVuYWJsZWQiOiBmYWxzZX0sICJvcmlnaW5hbF91cmwiOiAiaHR0cDovL3tkZWZhdWx0fS8iLCAidXBzdHJlYW0iOiAibXlydWJ5YXBwIiwgImNhY2hlIjogeyJkZWZhdWx0X3R0bCI6IDAsICJjb29raWVzIjogWyIqIl0sICJlbmFibGVkIjogdHJ1ZSwgImhlYWRlcnMiOiBbIkFjY2VwdCIsICJBY2NlcHQtTGFuZ3VhZ2UiXX0sICJ0eXBlIjogInVwc3RyZWFtIn19"
     ENV["PLATFORM_TREE_ID"]="2b2ba012b33a7b6f5b2cef5b42842bb04fa3cb65"
-    ENV["PLATFORM_VARIABLES"]="e30="
+    ENV["PLATFORM_VARIABLES"]="eyJmb28iOiB7ImdydWJiIjogeyJ0d28iOiAyLCAib25lIjogMX0sICJiYXIiOiAiYmF6In19"
     ENV["PORT"]="/run/app.sock"
     @config = PlatformSH::config
   end
@@ -48,7 +48,17 @@ describe PlatformSH do
   it 'has a database' do
     expect(@config["relationships"]["database"][0]["host"]).to eq("database.internal")
   end
+
   it 'has a project id' do
     expect(@config["project"]).to eq("u3cwg2o536mh6")
   end
+
+  it 'gets relationships from new method' do
+    expect(PlatformSH::get_relationship('database', 'host')).to eq('database.internal')
+  end
+
+  it 'gets environment variables' do
+    expect(@config['variables']['foo']['bar']).to eq("baz")
+  end
+
 end
