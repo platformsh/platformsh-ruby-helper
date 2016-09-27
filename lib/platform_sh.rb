@@ -30,7 +30,7 @@ class PlatformSH
     ENV.has_key? 'PLATFORM_PROJECT'
   end
 
-  def self.get_relationship rel_name, attr
+  def self.relationship rel_name, attr
     on_platform? ? config["relationships"][rel_name].first[attr] : nil
   end
 

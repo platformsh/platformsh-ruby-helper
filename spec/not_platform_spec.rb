@@ -10,7 +10,7 @@ describe PlatformSH do
     end
 
     it 'does not fail when running in envs other than Platform' do
-      expect(PlatformSH::get_relationship('database', 'host')).to be_nil
+      expect(PlatformSH::relationship('database', 'host')).to be_nil
     end
   
 end

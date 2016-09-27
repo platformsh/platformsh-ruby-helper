@@ -54,7 +54,7 @@ describe PlatformSH do
   end
 
   it 'gets relationships from new method' do
-    expect(PlatformSH::get_relationship('database', 'host')).to eq('database.internal')
+    expect(PlatformSH::relationship('database', 'host')).to eq('database.internal')
   end
 
   it 'gets environment variables' do
