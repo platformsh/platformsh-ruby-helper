@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe PlatformSH do
   before(:all) do
       @config = PlatformSH::config
