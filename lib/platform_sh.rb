@@ -57,23 +57,26 @@ class PlatformSH
   
   #Tries to guess relational database url
   def self.guess_database_url
-    databases = PlatformSH::config["relationships"].select {|k,v| v[0]["scheme"]=="mysql" || v[0]["scheme"]=="postgresql"}
+    databases = PlatformSH::config["relationships"].select {|k,v| v[0]["scheme"]=="mysql" || v[0]["scheme"]=="pgsql"}
     case databases.length
-    when 0
-      $stderr.puts "Could not find a relational database"
-      return nil
-    when 1
-      database = databases.first[1][0]
-      #This is needed to choose between mysql and mysql2 gems, magically.
-      if database['scheme'] == "mysql"
-        scheme = "mysql2"
-      else 
-        scheme = database['scheme']
-      end
-      database_url = "#{scheme}://#{database['username']}:#{database['password']}@#{database['host']}:#{database['port']}/#{database['path']}"
-      return database_url
-    else
-      $stderr.puts "More than one database, giving up, set configuration by hand"
+      when 0
+        $stderr.puts "Could not find a relational database"
+        return nil
+      when 1
+        database = databases.first[1][0]
+        #This is needed to choose between mysql and mysql2 gems, magically.
+        case database['scheme']
+          when "mysql"
+            scheme = "mysql2"
+          when "pgsql"
+            scheme = "postgresql"
+          else
+            scheme = database['scheme']
+        end
+        database_url = "#{scheme}://#{database['username']}:#{database['password']}@#{database['host']}:#{database['port']}/#{database['path']}"
+        return database_url
+      else
+        $stderr.puts "More than one database, giving up, set configuration by hand"
     end
   end
 
