@@ -64,7 +64,13 @@ class PlatformSH
       return nil
     when 1
       database = databases.first[1][0]
-      database_url = "#{database['scheme']}://#{database['username']}:#{database['password']}@#{database['host']}:#{database['port']}/#{database['path']}"
+      #This is needed to choose between mysql and mysql2 gems, magically.
+      if database['scheme'] == "mysql"
+        scheme = "mysql2"
+      else 
+        scheme = database['scheme']
+      end
+      database_url = "#{scheme}://#{}:#{database['password']}@#{database['host']}:#{database['port']}/#{database['path']}"
       return database_url
     else
       $stderr.puts "More than one database, giving up, set configuration by hand"
