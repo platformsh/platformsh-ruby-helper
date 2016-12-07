@@ -62,6 +62,6 @@ describe "Platform.sh configuration helper" do
   end
 
   it 'guesses database url' do
-    expect(PlatformSH::guess_database_url).to eq('mysql://user:@database.internal:3306/main')
+    expect(PlatformSH::guess_database_url).to eq('mysql2://user:@database.internal:3306/main')
   end
 end

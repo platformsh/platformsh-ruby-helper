@@ -70,7 +70,7 @@ class PlatformSH
       else 
         scheme = database['scheme']
       end
-      database_url = "#{scheme}://#{}:#{database['password']}@#{database['host']}:#{database['port']}/#{database['path']}"
+      database_url = "#{scheme}://#{database['username']}:#{database['password']}@#{database['host']}:#{database['port']}/#{database['path']}"
       return database_url
     else
       $stderr.puts "More than one database, giving up, set configuration by hand"
