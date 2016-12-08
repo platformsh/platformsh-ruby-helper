@@ -55,29 +55,69 @@ class PlatformSH
     JSON.parse(File.read('/run/config.json'))
   end
   
+  
   #Tries to guess relational database url
   def self.guess_database_url
-    databases = PlatformSH::config["relationships"].select {|k,v| v[0]["scheme"]=="mysql" || v[0]["scheme"]=="pgsql"}
-    case databases.length
-      when 0
-        $stderr.puts "Could not find a relational database"
-        return nil
-      when 1
-        database = databases.first[1][0]
-        #This is needed to choose between mysql and mysql2 gems, magically.
-        case database['scheme']
-          when "mysql"
-            scheme = "mysql2"
-          when "pgsql"
-            scheme = "postgresql"
-          else
-            scheme = database['scheme']
-        end
-        database_url = "#{scheme}://#{database['username']}:#{database['password']}@#{database['host']}:#{database['port']}/#{database['path']}"
-        return database_url
-      else
-        $stderr.puts "More than one database, giving up, set configuration by hand"
+    postgresql_url = self.guess_postgresql_url
+    mysql_url = self.guess_mysql_url
+    if !mysql_url.nil? && !postgresql_url.nil?
+      $stderr.puts "More than one relational database, giving up, set configuration by hand"
+      return nil
     end
+    if (mysql_url.nil? && postgresql_url.nil?)
+      $stderr.puts "Could not find a relational database"
+      return nil
+    end
+    return mysql_url || postgresql_url
   end
 
+  def self.guess_url(service_type, platform_scheme, url_template)
+      services = PlatformSH::config["relationships"].select {|k,v| v[0]["scheme"]==platform_scheme}
+      case services.length
+        when 0
+          $stderr.puts "Could not find an #{service_type}"
+          return nil
+        when 1
+          service = services.first[1][0]
+          service =  service.each_with_object({}){|(k,v), h| h[k.to_sym] = v} #keys need to be symbols
+          return url_template % service
+        else
+          $stderr.puts "More than one #{service_type}, giving up, set configuration by hand"
+      end
+  end
+  
+  def self.guess_elasticsearch_url
+    self.guess_url("elasticsearch", "http", "http://%{host}:%{port}")
+  end
+  
+  def self.guess_redis_url
+    self.guess_url("redis", "redis", "redis://%{host}:%{port}")
+  end
+  
+  def self.guess_mongodb_url
+    self.guess_url("mongodb", "mongodb", "mongodb://%{username}:%{password}@%{host}:%{port}/%{path}")
+  end
+  
+  def self.guess_solr_url
+    self.guess_url("solr", "solr", "http://%{host}:%{port}/%{path}")
+  end
+  
+  def self.guess_mysql_url
+    #fallback to mysql url if mysql2 gem is not loaded
+    if Gem::Specification::find_all_by_name("mysql2").empty?
+      template = "mysql://%{username}:%{password}@%{host}:%{port}/%{path}"
+    else
+      template = "mysql2://%{username}:%{password}@%{host}:%{port}/%{path}"
+    end
+    self.guess_url("mysql", "mysql",template)
+  end
+  
+  def self.guess_rabbitmq_url
+    self.guess_url("rabbitmq", "amqp","amqp://%{username}:%{password}@%{host}:%{port}")
+  end
+  
+  def self.guess_postgresql_url
+    self.guess_url("postgresql", "pgsql","postgresql://%{username}:%{password}@%{host}:%{port}")
+  end
+  
 end
