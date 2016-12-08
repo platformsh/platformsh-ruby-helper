@@ -124,7 +124,7 @@ class PlatformSH
     ENV['DATABASE_URL']=PlatformSH::guess_database_url
     ENV['MONGODB_URL']=PlatformSH::guess_mongodb_url
     ENV['REDIS_URL']=PlatformSH::guess_redis_url
-    ENV['ELASTICSEARCH_URL']=PlatformSH::guess_redis_url
+    ENV['ELASTICSEARCH_URL']=PlatformSH::guess_elasticsearch_url
     ENV['RABBITMQ_URL']=PlatformSH::guess_rabbitmq_url
     ENV['SOLR_URL']=PlatformSH::guess_solr_url
   end
