@@ -120,4 +120,13 @@ class PlatformSH
     self.guess_url("postgresql", "pgsql","postgresql://%{username}:%{password}@%{host}:%{port}")
   end
   
+  def self.export_services_urls
+    ENV['DATABASE_URL']=PlatformSH::guess_database_url
+    ENV['MONGODB_URL']=PlatformSH::guess_mongodb_url
+    ENV['REDIS_URL']=PlatformSH::guess_redis_url
+    ENV['ELASTICSEARCH_URL']=PlatformSH::guess_redis_url
+    ENV['RABBITMQ_URL']=PlatformSH::guess_rabbitmq_url
+    ENV['SOLR_URL']=PlatformSH::guess_solr_url
+  end
+  
 end
