@@ -196,6 +196,9 @@ class PlatformSH
       puts tunnel_info
     end
     export_services_urls
-    `bundle exec "#{command}"`
+    Open3.popen3(command) do |stdin, stdout, stderr, wait_thr|
+      puts "stdout is:" + stdout.read
+      $stderr.puts "stderr is:" + stderr.read
+    end
   end
 end
