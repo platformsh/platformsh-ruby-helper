@@ -152,7 +152,6 @@ class PlatformSH
   def self.tunnel_open?
     Open3.popen3("platform --yes tunnel:info") do |stdin, stdout, stderr, wait_thr|
       err = stderr.gets
-      puts err
       return !(!err.nil? && err.start_with?("No tunnels found"))
     end
   end
@@ -169,12 +168,34 @@ class PlatformSH
     %x(platform tunnel:close --yes >/dev/null)
   end
   
-  def self.tunnel_open_export_env_and_run
-    if !PlatformSH::tunnel_open?
-      PlatformSH::tunnel_open
+  def self.local_tunnel_env  
+    # Signal catching
+    def shut_down
+      puts "\nShutting down gracefully..."
+      sleep 1
     end
-    PlatformSH::export_services_urls
+
+    puts "I have PID #{Process.pid}"
+    %w(INT TERM USR1 USR2 TTIN).each do |sig|
+          begin
+            trap sig do
+              puts("got #{sig}")
+            end
+          rescue ArgumentError
+            puts "Signal #{sig} not supported"
+          end
+        end
+        
+    command = ARGV[1]
+    if command.nil?
+      $stderr.puts "You must supply an executable to run"
+      return nil
+    end
+    if !tunnel_open?
+      puts tunnel_open
+    end
+    export_services_urls
     puts "********\nRemeber to close the tunnel using platform tunnel:close\n********\n"
-    exec "bundle exec #{ARGV[1]}"
+    `bundle exec "#{command}"`
   end
 end
