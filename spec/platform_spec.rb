@@ -1,4 +1,5 @@
 require 'spec_helper'
+require "byebug"
 
 describe "Platform.sh configuration helper" do
 

@@ -48,7 +48,7 @@ class PlatformSH
   private
   def self.read_base64_json(var_name)
     begin
-      return  (Base64.decode64(ENV[var_name]))
+      return JSON.parse(Base64.decode64(ENV[var_name]))
     rescue
       $stderr.puts "no " + var_name + " environment variable"
       return nil
@@ -144,9 +144,14 @@ class PlatformSH
   end
 
   def self.cli_installed?
-    cli_installed = !(`platform --version --yes`.match "^Platform.sh CLI.*").nil?
-    $stderr.puts "No Platform.sh CLI found; Check your path" if !cli_installed 
-    cli_installed
+    begin
+      Open3.popen3("platform --version --yes") do |stdin, stdout, stderr, wait_thr|
+        err = stdout.gets
+        return (err.nil? && err.start_with?("Platform.sh CLI"))
+      end
+    rescue
+      $stderr.puts "WHATTT"
+    end
   end
 
   def self.tunnel_open?
@@ -161,11 +166,11 @@ class PlatformSH
   end
 
   def self.tunnel_open
-    %x(platform tunnel:open --yes >/dev/null)
+    %x(platform tunnel:open --yes)
   end
 
   def self.tunnel_close
-    %x(platform tunnel:close --yes >/dev/null)
+    %x(platform tunnel:close --yes)
   end
   
   def self.local_tunnel_env
