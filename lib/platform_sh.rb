@@ -168,24 +168,23 @@ class PlatformSH
     %x(platform tunnel:close --yes >/dev/null)
   end
   
-  def self.local_tunnel_env  
-    # Signal catching
-    def shut_down
-      puts "\nShutting down gracefully..."
-      sleep 1
-    end
-
-    puts "I have PID #{Process.pid}"
-    %w(INT TERM USR1 USR2 TTIN).each do |sig|
+  def self.local_tunnel_env
+    puts "This is an experimental feature\n"
+    %w(INT TERM).each do |sig|
           begin
             trap sig do
-              puts("got #{sig}")
+              shut_down
             end
           rescue ArgumentError
             puts "Signal #{sig} not supported"
           end
         end
-        
+    def self.shut_down
+      puts "\nShutting down gracefully..."
+      puts tunnel_close
+      exit
+    end
+
     command = ARGV[1]
     if command.nil?
       $stderr.puts "You must supply an executable to run"
@@ -193,9 +192,10 @@ class PlatformSH
     end
     if !tunnel_open?
       puts tunnel_open
+    else 
+      puts tunnel_info
     end
     export_services_urls
-    puts "********\nRemeber to close the tunnel using platform tunnel:close\n********\n"
     `bundle exec "#{command}"`
   end
 end
