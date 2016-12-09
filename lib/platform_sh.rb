@@ -1,13 +1,18 @@
 require "platform_sh/version"
 require "base64"
 require 'json'
+require 'open3'
 
 class PlatformSH
   'use strict'
   # Reads Platform.sh configuration from environment and returns a single object
   def self.config
+    conf = {}
+    if platform_local_development?
+      conf["relationships"] = JSON.parse(Base64.decode64(tunnel_info))
+      return conf
+    end
     if on_platform?
-      conf = {}
       conf["application"] = read_base64_json('PLATFORM_APPLICATION')
       conf["application_name"] =ENV["PLATFORM_APPLICATION_NAME"] || nil
       conf["app_dir"] =ENV["PLATFORM_APP_DIR"] || nil
@@ -27,7 +32,7 @@ class PlatformSH
     end
     conf
   end
-  
+
   def self.on_platform?
     ENV.has_key? 'PLATFORM_PROJECT'
   end
@@ -35,7 +40,7 @@ class PlatformSH
   def self.is_build_environment?
     (!ENV.has_key?('PLATFORM_ENVIRONMENT') && ENV.has_key?('PLATFORM_PROJECT'))
   end
-  
+
   def self.relationship rel_name, attr
     on_platform? ? config["relationships"][rel_name].first[attr] : nil
   end
@@ -43,7 +48,7 @@ class PlatformSH
   private
   def self.read_base64_json(var_name)
     begin
-      return JSON.parse(Base64.decode64(ENV[var_name]))
+      return  (Base64.decode64(ENV[var_name]))
     rescue
       $stderr.puts "no " + var_name + " environment variable"
       return nil
@@ -54,8 +59,8 @@ class PlatformSH
   def self.read_app_config
     JSON.parse(File.read('/run/config.json'))
   end
-  
-  
+
+
   #Tries to guess relational database url
   def self.guess_database_url
     postgresql_url = self.guess_postgresql_url
@@ -72,36 +77,36 @@ class PlatformSH
   end
 
   def self.guess_url(service_type, platform_scheme, url_template)
-      services = PlatformSH::config["relationships"].select {|k,v| v[0]["scheme"]==platform_scheme}
-      case services.length
-        when 0
-          $stderr.puts "Could not find an #{service_type}"
-          return nil
-        when 1
-          service = services.first[1][0]
-          service =  service.each_with_object({}){|(k,v), h| h[k.to_sym] = v} #keys need to be symbols
-          return url_template % service
-        else
-          $stderr.puts "More than one #{service_type}, giving up, set configuration by hand"
-      end
+    services = PlatformSH::config["relationships"].select {|k,v| v[0]["scheme"]==platform_scheme}
+    case services.length
+    when 0
+      $stderr.puts "Could not find an #{service_type}"
+      return nil
+    when 1
+      service = services.first[1][0]
+      service =  service.each_with_object({}){|(k,v), h| h[k.to_sym] = v} #keys need to be symbols
+      return url_template % service
+    else
+      $stderr.puts "More than one #{service_type}, giving up, set configuration by hand"
+    end
   end
-  
+
   def self.guess_elasticsearch_url
     self.guess_url("elasticsearch", "http", "http://%{host}:%{port}")
   end
-  
+
   def self.guess_redis_url
     self.guess_url("redis", "redis", "redis://%{host}:%{port}")
   end
-  
+
   def self.guess_mongodb_url
     self.guess_url("mongodb", "mongodb", "mongodb://%{username}:%{password}@%{host}:%{port}/%{path}")
   end
-  
+
   def self.guess_solr_url
     self.guess_url("solr", "solr", "http://%{host}:%{port}/%{path}")
   end
-  
+
   def self.guess_mysql_url
     #fallback to mysql url if mysql2 gem is not loaded
     if Gem::Specification::find_all_by_name("mysql2").empty?
@@ -111,17 +116,17 @@ class PlatformSH
     end
     self.guess_url("mysql", "mysql",template)
   end
-  
+
   def self.guess_rabbitmq_url
     self.guess_url("rabbitmq", "amqp","amqp://%{username}:%{password}@%{host}:%{port}")
   end
-  
+
   def self.guess_postgresql_url
     self.guess_url("postgresql", "pgsql","postgresql://%{username}:%{password}@%{host}:%{port}")
   end
-  
+
   def self.export_services_urls
-    if on_platform?
+    if (on_platform? || platform_local_development?) && !is_build_environment?
       ENV['DATABASE_URL']=PlatformSH::guess_database_url
       ENV['MONGODB_URL']=PlatformSH::guess_mongodb_url
       ENV['REDIS_URL']=PlatformSH::guess_redis_url
@@ -132,5 +137,44 @@ class PlatformSH
       $stderr.puts "Can not guess URLS when not on platform"
     end
   end
+
+  def self.platform_local_development?
+    dev_environment = ENV["RACK_ENV"] != "production" && ENV["RAILS_ENV"] != "production"
+    dev_environment && cli_installed? && !on_platform?
+  end
+
+  def self.cli_installed?
+    cli_installed = !(`platform --version --yes`.match "^Platform.sh CLI.*").nil?
+    $stderr.puts "No Platform.sh CLI found; Check your path" if !cli_installed 
+    cli_installed
+  end
+
+  def self.tunnel_open?
+    Open3.popen3("platform --yes tunnel:info") do |stdin, stdout, stderr, wait_thr|
+      err = stderr.gets
+      puts err
+      return !(!err.nil? && err.start_with?("No tunnels found"))
+    end
+  end
+
+  def self.tunnel_info
+    %x(platform tunnel:info -c --yes)
+  end
+
+  def self.tunnel_open
+    %x(platform tunnel:open --yes >/dev/null)
+  end
+
+  def self.tunnel_close
+    %x(platform tunnel:close --yes >/dev/null)
+  end
   
+  def self.tunnel_open_export_env_and_run
+    if !PlatformSH::tunnel_open?
+      PlatformSH::tunnel_open
+    end
+    PlatformSH::export_services_urls
+    puts "********\nRemeber to close the tunnel using platform tunnel:close\n********\n"
+    exec "bundle exec #{ARGV[1]}"
+  end
 end

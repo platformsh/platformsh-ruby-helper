@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "platform_sh"
+
+PlatformSH::tunnel_open_export_env_and_run
