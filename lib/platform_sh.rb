@@ -76,23 +76,24 @@ class PlatformSH
     return mysql_url || postgresql_url
   end
 
-  def self.guess_url(platform_service, url_template)
-      services = PlatformSH::config["relationships"].select {|k,v| v[0]["service"]==platform_service}
+  def self.guess_url(scheme, url_template, port=nil)
+      services = PlatformSH::config["relationships"].select {|k,v| v[0]["scheme"]==scheme && (!port || v[0]["port"].to_s==port.to_s )} #For ElasticSearch and InfluxDB both on HTTP we also look at the port
       case services.length
         when 0
-          $logger.info "Could not find an #{platform_service}"
+          $logger.info "Could not find an #{scheme}"
           return nil
         when 1
           service = services.first[1][0]
           service =  service.each_with_object({}){|(k,v), h| h[k.to_sym] = v} #keys need to be symbols
           return url_template % service
         else
-          $logger.warn "More than one #{platform_service}, giving up, set configuration by hand"
+          $logger.warn "More than one #{scheme}, giving up, set configuration by hand"
+          return nil
       end
   end
   
   def self.guess_elasticsearch_url
-    self.guess_url("elasticsearch", "http://%{host}:%{port}")
+    self.guess_url("http", "http://%{host}:%{port}",9200)
   end
   
   def self.guess_redis_url
@@ -118,15 +119,15 @@ class PlatformSH
   end
   
   def self.guess_rabbitmq_url
-    self.guess_url("rabbitmq","amqp://%{username}:%{password}@%{host}:%{port}")
+    self.guess_url("amqp","amqp://%{username}:%{password}@%{host}:%{port}")
   end
   
   def self.guess_postgresql_url
-    self.guess_url("postgresql","postgresql://%{username}:%{password}@%{host}:%{port}")
+    self.guess_url("pgsql","postgresql://%{username}:%{password}@%{host}:%{port}")
   end
   
   def self.guess_influxdb_url
-    self.guess_url("influxdb","http://%{host}:%{port}")
+    self.guess_url("http","http://%{host}:%{port}", 8086)
   end
   
   def self.export_services_urls
