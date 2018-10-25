@@ -2,6 +2,7 @@ require "platform_sh/version"
 require "base64"
 require 'json'
 require 'logger'
+require 'uri'
 
 $logger = Logger.new(STDOUT)
 $logger.level = Logger::WARN
@@ -13,6 +14,7 @@ class PlatformSH
     if on_platform?
       conf = {}
       conf["application"] = read_base64_json('PLATFORM_APPLICATION')
+      conf["routes"] = read_base64_json('PLATFORM_ROUTES')
       conf["application_name"] =ENV["PLATFORM_APPLICATION_NAME"] || nil
       conf["app_dir"] =ENV["PLATFORM_APP_DIR"] || nil
       conf["project"] =ENV["PLATFORM_PROJECT"] || nil
@@ -60,6 +62,24 @@ class PlatformSH
     JSON.parse(File.read('/run/config.json'))
   end
   
+  #Tries to guess the hostname it takes the first upstream
+  def self.guess_hostname
+    upstreams = PlatformSH::config["routes"].select {|k,v| v["type"]=="upstream"}
+    begin 
+    if upstreams.length > 1
+      $logger.info "More than one upstream. Picking first in list."
+    end
+    if upstreams.length > 0
+      return URI.parse(upstreams.keys[0]).host
+    else
+      $logger.error "Found no upstreams in PLATFORM_ROUTES"
+      return nil
+    end
+    rescue Exception => e
+      $logger.error "Error encountered while guessing hostname. #{e.message}"
+      return nil
+    end
+  end  
   
   #Tries to guess relational database url
   def self.guess_database_url
