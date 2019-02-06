@@ -5,7 +5,9 @@ require 'logger'
 require 'uri'
 
 $logger = Logger.new(STDOUT)
-$logger.level = Logger::WARN
+# Default to Log level DEBUG unless the env variable is presnet, then set it to
+# WARN
+$logger.level = ENV['DEBUG'] || $DEBUG ?  Logger::DEBUG : Logger::WARN
 
 class PlatformSH
   'use strict'
@@ -28,7 +30,7 @@ class PlatformSH
         conf["variables"] = read_base64_json('PLATFORM_VARIABLES')
       end
     else
-      $logger.warn "This is not running on platform.sh"
+      $logger.info "This is not running on platform.sh"
       return nil
     end
     conf
@@ -150,6 +152,10 @@ class PlatformSH
     self.guess_url("http","http://%{host}:%{port}", 8086)
   end
   
+  def self.guess_kafka_url
+    self.guess_url("kafka","%{host}:%{port}")
+  end
+  
   def self.export_services_urls
     ENV['DATABASE_URL']=PlatformSH::guess_database_url
     ENV['MONGODB_URL']=PlatformSH::guess_mongodb_url
@@ -158,6 +164,8 @@ class PlatformSH
     ENV['RABBITMQ_URL']=PlatformSH::guess_rabbitmq_url
     ENV['SOLR_URL']=PlatformSH::guess_solr_url
     ENV['INFLUXDB_URL']=PlatformSH::guess_influxdb_url
+    ENV['KAFKA_URL']=PlatformSH::guess_kafka_url
+    ENV['HOSTNAME']=PlatformSH::guess_hostname
   end
   
 end

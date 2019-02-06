@@ -24,6 +24,10 @@ Or install it yourself as:
 You could now use `@config["relationships"]["database"][0]` to get the configuration hash of the
 database relationship.
 
+The Gem can also export in the environment URLs that can be picked up by libraries for their configuration. 
+
+    PlatformSH::export_services_urls
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
