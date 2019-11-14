@@ -13,25 +13,24 @@ class PlatformSH
   'use strict'
   # Reads Platform.sh configuration from environment and returns a single object
   def self.config
-    if on_platform?
-      conf = {}
-      conf["application"] = read_base64_json('PLATFORM_APPLICATION')
-      conf["routes"] = read_base64_json('PLATFORM_ROUTES')
-      conf["application_name"] =ENV["PLATFORM_APPLICATION_NAME"] || nil
-      conf["app_dir"] =ENV["PLATFORM_APP_DIR"] || nil
-      conf["project"] =ENV["PLATFORM_PROJECT"] || nil
-      conf["document_root"] =ENV["PLATFORM_DOCUMENT_ROOT"] || nil
-      if !is_build_environment?
-        conf["environment"] =ENV["PLATFORM_ENVIRONMENT"] || nil
-        conf["project_entropy"] =ENV["PLATFORM_PROJECT_ENTROPY"] || nil
-        conf["port"] =ENV["PORT"] || nil
-        conf["socket"] =ENV["SOCKET"] || nil
-        conf["relationships"] = read_base64_json('PLATFORM_RELATIONSHIPS')
-        conf["variables"] = read_base64_json('PLATFORM_VARIABLES')
-      end
-    else
+    if !on_platform?
       $logger.info "This is not running on platform.sh"
       return nil
+    end
+    conf = {}
+    conf["application"] = read_base64_json('PLATFORM_APPLICATION')
+    conf["routes"] = read_base64_json('PLATFORM_ROUTES')
+    conf["application_name"] =ENV["PLATFORM_APPLICATION_NAME"] || nil
+    conf["app_dir"] =ENV["PLATFORM_APP_DIR"] || nil
+    conf["project"] =ENV["PLATFORM_PROJECT"] || nil
+    conf["document_root"] =ENV["PLATFORM_DOCUMENT_ROOT"] || nil
+    if !is_build_environment?
+      conf["environment"] =ENV["PLATFORM_ENVIRONMENT"] || nil
+      conf["project_entropy"] =ENV["PLATFORM_PROJECT_ENTROPY"] || nil
+      conf["port"] =ENV["PORT"] || nil
+      conf["socket"] =ENV["SOCKET"] || nil
+      conf["relationships"] = read_base64_json('PLATFORM_RELATIONSHIPS')
+      conf["variables"] = read_base64_json('PLATFORM_VARIABLES')
     end
     conf
   end
@@ -60,12 +59,25 @@ class PlatformSH
 
 
   def self.read_app_config
+    if !on_platform?
+      $logger.info "This is not running on platform.sh"
+      return nil
+    end
     #FIXME we should be able to get 
     JSON.parse(File.read('/run/config.json'))
   end
   
   #Tries to guess the hostname it takes the first upstream
   def self.guess_hostname
+    if !on_platform?
+      $logger.info "This is not running on platform.sh"
+      return nil
+    end
+    if is_build_environment?
+      $logger.info "No hostname in build environment"
+      return nil
+    end
+    
     upstreams = PlatformSH::config["routes"].select {|k,v| v["type"]=="upstream"}
     begin 
     if upstreams.length > 1
@@ -85,6 +97,14 @@ class PlatformSH
   
   #Tries to guess relational database url
   def self.guess_database_url
+    if !on_platform?
+      $logger.info "This is not running on platform.sh"
+      return nil
+    end
+    if is_build_environment?
+      $logger.info "No relationships in build environment"
+      return nil
+    end
     postgresql_url = self.guess_postgresql_url
     mysql_url = self.guess_mysql_url
     if !mysql_url.nil? && !postgresql_url.nil?
@@ -99,19 +119,27 @@ class PlatformSH
   end
 
   def self.guess_url(scheme, url_template, port=nil)
-      services = PlatformSH::config["relationships"].select {|k,v| v[0]["scheme"]==scheme && (!port || v[0]["port"].to_s==port.to_s )} #For ElasticSearch and InfluxDB both on HTTP we also look at the port
-      case services.length
-        when 0
-          $logger.info "Could not find an #{scheme}"
-          return nil
-        when 1
-          service = services.first[1][0]
-          service =  service.each_with_object({}){|(k,v), h| h[k.to_sym] = v} #keys need to be symbols
-          return url_template % service
-        else
-          $logger.warn "More than one #{scheme}, giving up, set configuration by hand"
-          return nil
-      end
+    if !on_platform?
+      $logger.info "This is not running on platform.sh"
+      return nil
+    end
+    if is_build_environment?
+      $logger.info "No relationships in build environment"
+      return nil
+    end
+    services = PlatformSH::config["relationships"].select {|k,v| v[0]["scheme"]==scheme && (!port || v[0]["port"].to_s==port.to_s )} #For ElasticSearch and InfluxDB both on HTTP we also look at the port
+    case services.length
+      when 0
+        $logger.info "Could not find an #{scheme}"
+        return nil
+      when 1
+        service = services.first[1][0]
+        service =  service.each_with_object({}){|(k,v), h| h[k.to_sym] = v} #keys need to be symbols
+        return url_template % service
+      else
+        $logger.warn "More than one #{scheme}, giving up, set configuration by hand"
+        return nil
+    end
   end
   
   def self.guess_elasticsearch_url
