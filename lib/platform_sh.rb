@@ -185,15 +185,15 @@ class PlatformSH
   end
   
   def self.export_services_urls
-    ENV['DATABASE_URL']=PlatformSH::guess_database_url
-    ENV['MONGODB_URL']=PlatformSH::guess_mongodb_url
-    ENV['REDIS_URL']=PlatformSH::guess_redis_url
-    ENV['ELASTICSEARCH_URL']=PlatformSH::guess_elasticsearch_url
-    ENV['RABBITMQ_URL']=PlatformSH::guess_rabbitmq_url
-    ENV['SOLR_URL']=PlatformSH::guess_solr_url
-    ENV['INFLUXDB_URL']=PlatformSH::guess_influxdb_url
-    ENV['KAFKA_URL']=PlatformSH::guess_kafka_url
-    ENV['HOSTNAME']=PlatformSH::guess_hostname
+    ENV['DATABASE_URL']||=PlatformSH::guess_database_url
+    ENV['MONGODB_URL']||=PlatformSH::guess_mongodb_url
+    ENV['REDIS_URL']||=PlatformSH::guess_redis_url
+    ENV['ELASTICSEARCH_URL']||=PlatformSH::guess_elasticsearch_url
+    ENV['RABBITMQ_URL']||=PlatformSH::guess_rabbitmq_url
+    ENV['SOLR_URL']||=PlatformSH::guess_solr_url
+    ENV['INFLUXDB_URL']||=PlatformSH::guess_influxdb_url
+    ENV['KAFKA_URL']||=PlatformSH::guess_kafka_url
+    ENV['HOSTNAME']||=PlatformSH::guess_hostname
   end
   
 end
