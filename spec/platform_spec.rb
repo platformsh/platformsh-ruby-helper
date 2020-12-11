@@ -103,4 +103,51 @@ describe "Platform.sh configuration helper" do
     @config = PlatformSH::config
     expect(PlatformSH::guess_hostname).to eq('master-7rqtwti-sxllmndh3xvhu.eu.platform.sh')
   end
+
+  describe '.export_services_urls' do
+    let(:export_services_envs) do
+      %w[DATABASE_URL MONGODB_URL REDIS_URL ELASTICSEARCH_URL RABBITMQ_URL
+         SOLR_URL INFLUXDB_URL KAFKA_URL HOSTNAME].freeze
+    end
+
+    context 'when ENV is not already set' do
+      it 'try to guess urls' do
+        export_services_envs.each do |key|
+          ENV.clear[key]
+        end
+        ENV["PLATFORM_ENVIRONMENT"] = "production"
+        ENV['PLATFORM_PROJECT']='u3cwg2o536mh6'
+        # blank them to avoid log warning
+        ENV['PLATFORM_APPLICATION']= "e30=\n"
+        ENV['PLATFORM_VARIABLES'] = "e30=\n"
+        # postgres without mysql to have a DATABASE_URL present
+        ENV['PLATFORM_RELATIONSHIPS']="eyJwb3N0Z3JlcyI6W3sidXNlcm5hbWUiOiJtYWluIiwic2NoZW1lIjoicGdz\ncWwiLCJzZXJ2aWNlIjoicG9zdGdyZXNxbCIsImlwIjoiMjUwLjAuNjYuNzIi\nLCJjbHVzdGVyIjoic3hsbG1uZGgzeHZodS1tYXN0ZXItN3JxdHd0aSIsImhv\nc3QiOiJwb3N0Z3Jlcy5pbnRlcm5hbCIsInJlbCI6InBvc3RncmVzcWwiLCJw\nYXRoIjoibWFpbiIsInF1ZXJ5Ijp7ImlzX21hc3RlciI6dHJ1ZX0sInBhc3N3\nb3JkIjoibWFpbiIsInBvcnQiOjU0MzJ9XSwibW9uZ29kYiI6W3sidXNlcm5h\nbWUiOiJtYWluIiwic2NoZW1lIjoibW9uZ29kYiIsInNlcnZpY2UiOiJtb25n\nb2RiIiwiaXAiOiIyNTAuMC42Ni43NCIsImNsdXN0ZXIiOiJzeGxsbW5kaDN4\ndmh1LW1hc3Rlci03cnF0d3RpIiwiaG9zdCI6Im1vbmdvZGIuaW50ZXJuYWwi\nLCJyZWwiOiJtb25nb2RiIiwicGF0aCI6Im1haW4iLCJxdWVyeSI6eyJpc19t\nYXN0ZXIiOnRydWV9LCJwYXNzd29yZCI6Im1haW4iLCJwb3J0IjoyNzAxN31d\nLCJyZWRpcyI6W3sic2VydmljZSI6InJlZGlzIiwiaXAiOiIyNTAuMC42Ni43\nMCIsImNsdXN0ZXIiOiJzeGxsbW5kaDN4dmh1LW1hc3Rlci03cnF0d3RpIiwi\naG9zdCI6InJlZGlzLmludGVybmFsIiwicmVsIjoicmVkaXMiLCJzY2hlbWUi\nOiJyZWRpcyIsInBvcnQiOjYzNzl9XSwicmFiYml0bXEiOlt7InVzZXJuYW1l\nIjoiZ3Vlc3QiLCJwYXNzd29yZCI6Imd1ZXN0Iiwic2VydmljZSI6InJhYmJp\ndG1xIiwiaXAiOiIyNTAuMC42Ni43NSIsImNsdXN0ZXIiOiJzeGxsbW5kaDN4\ndmh1LW1hc3Rlci03cnF0d3RpIiwiaG9zdCI6InJhYmJpdG1xLmludGVybmFs\nIiwicmVsIjoicmFiYml0bXEiLCJzY2hlbWUiOiJhbXFwIiwicG9ydCI6NTY3\nMn1dLCJlbGFzdGljc2VhcmNoIjpbeyJzZXJ2aWNlIjoiZWxhc3RpY3NlYXJj\naCIsImlwIjoiMjUwLjAuNjYuODAiLCJjbHVzdGVyIjoic3hsbG1uZGgzeHZo\ndS1tYXN0ZXItN3JxdHd0aSIsImhvc3QiOiJlbGFzdGljc2VhcmNoLmludGVy\nbmFsIiwicmVsIjoiZWxhc3RpY3NlYXJjaCIsInNjaGVtZSI6Imh0dHAiLCJw\nb3J0IjoiOTIwMCJ9XSwiaW5mbHV4ZGIiOlt7InNlcnZpY2UiOiJpbmZsdXhk\nYiIsImlwIjoiMjUwLjAuNjYuODciLCJjbHVzdGVyIjoic3hsbG1uZGgzeHZo\ndS1tYXN0ZXItN3JxdHd0aSIsImhvc3QiOiJpbmZsdXhkYi5pbnRlcm5hbCIs\nInJlbCI6ImluZmx1eGRiIiwic2NoZW1lIjoiaHR0cCIsInBvcnQiOjgwODZ9\nXSwic29sciI6W3sic2VydmljZSI6InNvbHIiLCJpcCI6IjI1MC4wLjY2Ljgz\nIiwiY2x1c3RlciI6InN4bGxtbmRoM3h2aHUtbWFzdGVyLTdycXR3dGkiLCJo\nb3N0Ijoic29sci5pbnRlcm5hbCIsInJlbCI6InNvbHIiLCJwYXRoIjoic29s\nciIsInNjaGVtZSI6InNvbHIiLCJwb3J0Ijo4MDgwfV0sImthZmthIjpbeyJz\nZXJ2aWNlIjoia2Fma2EiLCJpcCI6IjI1MC4wLjY2LjgzIiwiY2x1c3RlciI6\nInN4bGxtbmRoM3h2aHUtbWFzdGVyLTdycXR3dGkiLCJob3N0Ijoia2Fma2Eu\naW50ZXJuYWwiLCJyZWwiOiJrYWZrYSIsInNjaGVtZSI6ImthZmthIiwicG9y\ndCI6OTA5Mn1dfQ==\n"
+        ENV['PLATFORM_ROUTES']='eyJodHRwczovL21hc3Rlci03cnF0d3RpLXN4bGxtbmRoM3h2aHUuZXUucGxhdGZvcm0uc2gvIjogeyJ0eXBlIjogInVwc3RyZWFtIiwgImNhY2hlIjogeyJkZWZhdWx0X3R0bCI6IDAsICJjb29raWVzIjogWyIqIl0sICJlbmFibGVkIjogdHJ1ZSwgImhlYWRlcnMiOiBbIkFjY2VwdCIsICJBY2NlcHQtTGFuZ3VhZ2UiXX0sICJzc2kiOiB7ImVuYWJsZWQiOiBmYWxzZX0sICJ1cHN0cmVhbSI6ICJteXJ1YnlhcHAiLCAib3JpZ2luYWxfdXJsIjogImh0dHBzOi8ve2RlZmF1bHR9LyJ9LCAiaHR0cDovL21hc3Rlci03cnF0d3RpLXN4bGxtbmRoM3h2aHUuZXUucGxhdGZvcm0uc2gvIjogeyJ0byI6ICJodHRwczovL21hc3Rlci03cnF0d3RpLXN4bGxtbmRoM3h2aHUuZXUucGxhdGZvcm0uc2gvIiwgInR5cGUiOiAicmVkaXJlY3QiLCAib3JpZ2luYWxfdXJsIjogImh0dHA6Ly97ZGVmYXVsdH0vIn19'
+        PlatformSH.export_services_urls
+        expect(ENV['DATABASE_URL']).to eq("postgresql://main:main@postgres.internal:5432")
+        expect(ENV['MONGODB_URL']).to eq("mongodb://main:main@mongodb.internal:27017/main")
+        expect(ENV['REDIS_URL']).to eq("redis://redis.internal:6379")
+        expect(ENV['ELASTICSEARCH_URL']).to eq("http://elasticsearch.internal:9200")
+        expect(ENV['RABBITMQ_URL']).to eq("amqp://guest:guest@rabbitmq.internal:5672")
+        expect(ENV['SOLR_URL']).to eq("http://solr.internal:8080/solr")
+        expect(ENV['INFLUXDB_URL']).to eq("http://influxdb.internal:8086")
+        expect(ENV['KAFKA_URL']).to eq("kafka.internal:9092")
+        expect(ENV['HOSTNAME']).to eq("master-7rqtwti-sxllmndh3xvhu.eu.platform.sh")
+      end
+    end
+
+    context 'when ENV is already set' do
+      let(:env_value) { "something" }
+
+      it 'do not override urls' do
+        export_services_envs.each do |key|
+          ENV[key] = env_value
+        end
+        PlatformSH.export_services_urls
+        export_services_envs.each do |key|
+          expect(ENV[key]).to eq(env_value)
+        end
+      end
+    end
+  end
 end
